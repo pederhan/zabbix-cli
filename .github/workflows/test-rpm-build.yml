@@ -1,0 +1,27 @@
+name: build
+
+on:
+  push:
+    # tags:
+    #   - 'v*.*.*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: jiro4989/build-rpm-action@v2
+        with:
+          summary: 'Command-line interface for Zabbix'
+          package: zabbix-cli
+          package_root: rpm
+          maintainer: unioslo
+          version: ${{ contains('v', github.ref) && github.ref || 'v0.0.0' }} # refs/tags/v*.*.*
+          arch: 'x86_64'
+          desc: 'Command-line interface for Zabbix monitoring system.'
+      - uses: actions/upload-artifact@v3
+        with:
+          name: artifact-rpm
+          path: |
+            ./*.rpm
+            !./*-debuginfo-*.rpm
