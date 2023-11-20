@@ -1,0 +1,24 @@
+name: deb build
+
+on:
+  push:
+    # tags:
+    #   - 'v*.*.*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: jiro4989/build-deb-action@v3
+        with:
+          package: zabbix-cli
+          package_root: debian
+          maintainer: unioslo
+          version: ${{ github.ref }} # refs/tags/v*.*.*
+          arch: 'amd64'
+        #   depends: 'debhelper (>= 13), debhelper-compat (= 13), dh-python, python3-all, python3-setuptools'
+          desc: > 
+            Command-line interface for Zabbix monitoring system. 
+            Zabbix-cli is a terminal client for managing some Zabbix
+            administration tasks via the zabbix-API.
