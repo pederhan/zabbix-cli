@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import typer
 
+from zabbix_cli.logs import configure_logging
+
 
 app = typer.Typer(
     name="zabbix-cli-bulk-execution", help="Bulk execution of Zabbix commands"
@@ -9,7 +11,7 @@ app = typer.Typer(
 
 
 @app.callback(invoke_without_command=True)
-def _main(
+def main_callback(
     input_file: str = typer.Option(
         "-",
         "--input-file",
@@ -24,6 +26,7 @@ def _main(
 def main() -> int:
     """Main entry point for the CLI."""
     try:
+        configure_logging()
         app()
     except Exception as e:
         from zabbix_cli.exceptions import handle_exception
