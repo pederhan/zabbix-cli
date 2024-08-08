@@ -98,7 +98,7 @@ def create_templategroup(
             app.state.client.update_usergroup_rights(
                 usergroup,
                 [templategroup],
-                UsergroupPermission.READ_WRITE,
+                UsergroupPermission.RW,
                 hostgroup=False,
             )
             info(f"Assigned Read/Write permission for user group {usergroup!r}")
@@ -107,7 +107,7 @@ def create_templategroup(
             app.state.client.update_usergroup_rights(
                 usergroup,
                 [templategroup],
-                UsergroupPermission.READ_ONLY,
+                UsergroupPermission.RO,
                 hostgroup=False,
             )
             info(f"Assigned Read-only permission for user group {usergroup!r}")

@@ -373,13 +373,13 @@ def create_host_interface(
             if snmp_security_level:
                 details.securitylevel = snmp_security_level.as_api_value()
             # authNoPriv and authPriv:
-            if snmp_security_level != SNMPSecurityLevel.NO_AUTH_NO_PRIV:
+            if snmp_security_level != SNMPSecurityLevel.noAuthNoPriv:
                 if snmp_auth_protocol:
                     details.authprotocol = snmp_auth_protocol.as_api_value()
                 if snmp_auth_passphrase:
                     details.authpassphrase = snmp_auth_passphrase
                 # authPriv:
-                if snmp_security_level == SNMPSecurityLevel.AUTH_PRIV:
+                if snmp_security_level == SNMPSecurityLevel.authNoPriv:
                     if snmp_priv_protocol:
                         details.privprotocol = snmp_priv_protocol.as_api_value()
                     if snmp_priv_passphrase:

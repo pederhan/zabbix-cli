@@ -733,9 +733,7 @@ def add_usergroup_permissions(
         exit_err("At least one host group or template group must be specified.")
 
     if not permission:
-        permission = UsergroupPermission.from_prompt(
-            default=UsergroupPermission.READ_WRITE
-        )
+        permission = UsergroupPermission.from_prompt(default=UsergroupPermission.RW)
 
     if hgroups:
         with app.status("Adding host group permissions..."):

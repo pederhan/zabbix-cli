@@ -185,13 +185,13 @@ def create_hostgroup(
         # Admin group(s) gets Read/Write
         for usergroup in rw_grps:
             app.state.client.update_usergroup_rights(
-                usergroup, [hostgroup], UsergroupPermission.READ_WRITE, hostgroup=True
+                usergroup, [hostgroup], UsergroupPermission.RW, hostgroup=True
             )
             info(f"Assigned Read/Write permission for user group {usergroup!r}")
         # Default group(s) gets Read
         for usergroup in ro_grps:
             app.state.client.update_usergroup_rights(
-                usergroup, [hostgroup], UsergroupPermission.READ_ONLY, hostgroup=True
+                usergroup, [hostgroup], UsergroupPermission.RO, hostgroup=True
             )
             info(f"Assigned Read-only permission for user group {usergroup!r}")
     except Exception as e:

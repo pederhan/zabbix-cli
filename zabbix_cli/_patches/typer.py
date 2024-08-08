@@ -25,6 +25,7 @@ from typer.main import lenient_issubclass
 from typer.models import ParameterInfo
 
 from zabbix_cli._patches.common import get_patcher
+from zabbix_cli.pyzabbix.enums import APIIntEnum
 from zabbix_cli.pyzabbix.enums import APIStrEnum
 
 if TYPE_CHECKING:
@@ -253,6 +254,13 @@ def patch_get_click_type() -> None:
             return click.Choice(
                 annotation.all_choices(),
                 case_sensitive=parameter_info.case_sensitive,
+            )
+        # our patch for APIIntEnum
+        elif lenient_issubclass(annotation, APIIntEnum):
+            annotation = cast(Type[APIIntEnum], annotation)
+            return click.Choice(
+                annotation.all_choices(),
+                case_sensitive=False,
             )
         elif lenient_issubclass(annotation, Enum):
             return click.Choice(
