@@ -23,6 +23,7 @@ from zabbix_cli.output.console import info
 from zabbix_cli.output.console import print_path
 from zabbix_cli.output.console import print_toml
 from zabbix_cli.output.console import success
+from zabbix_cli.output.prompts import str_prompt
 from zabbix_cli.output.render import render_result
 from zabbix_cli.utils.utils import open_directory
 
@@ -137,16 +138,40 @@ def debug_cmd(
 @app.command(name="login", rich_help_panel=HELP_PANEL)
 def login(
     ctx: typer.Context,
+    username: str = typer.Option(
+        None, "--username", "-u", help="Username to log in with."
+    ),
+    password: str = typer.Option(
+        None, "--password", "-p", help="Password to log in with."
+    ),
+    token: str = typer.Option(None, "--token", "-t", help="API token to log in with."),
 ) -> None:
     """Reauthenticate with the Zabbix API.
 
     Creates a new auth token.
     """
+    from pydantic import SecretStr
+
     if not app.state.repl:
         raise ZabbixCLIError("This command is only available in the REPL.")
 
-    client = app.state.client
     config = app.state.config
+
+    # Prompt for password if username is specified
+    if username and not password:
+        password = str_prompt(
+            "Password",
+            password=True,
+            empty_ok=False,
+        )
+
+    if username:
+        config.api.username = username
+        config.api.password = SecretStr(password)
+        config.api.auth_token = None  # Clear token if it exists
+    elif token:
+        config.api.auth_token = SecretStr(token)
+        config.api.password = None
 
     # End current session if it's active
     try:
@@ -157,7 +182,7 @@ def login(
     except Exception as e:
         logger.debug("Failed to log out: %s", e)
 
-    auth.login(client, config)
+    app.state.login()
     success(f"Logged in to {config.api.url} as {config.api.username}.")
 
 
@@ -206,10 +231,3 @@ def init(
         init_config(config_file=config_file, overwrite=overwrite)
     except ConfigExistsError as e:
         raise ZabbixCLIError(f"{e}. Use [option]--overwrite[/] to overwrite it") from e
-
-    # try:
-    #     login(ctx)  # is this too hacky?
-    # except Exception as e:
-    #     from zabbix_cli.exceptions import handle_exception
-
-    #     handle_exception(e)

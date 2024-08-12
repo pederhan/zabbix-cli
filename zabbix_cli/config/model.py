@@ -39,6 +39,8 @@ from pydantic import model_validator
 from typing_extensions import Self
 
 from zabbix_cli._v2_compat import CONFIG_PRIORITY as CONFIG_PRIORITY_LEGACY
+from zabbix_cli.config.constants import AUTH_FILE
+from zabbix_cli.config.constants import AUTH_TOKEN_FILE
 from zabbix_cli.config.constants import OutputFormat
 from zabbix_cli.config.utils import find_config
 from zabbix_cli.config.utils import load_config_conf
@@ -157,6 +159,8 @@ class AppConfig(BaseModel):
     )
     use_colors: bool = True
     use_auth_token_file: bool = True
+    auth_token_file: Path = AUTH_TOKEN_FILE
+    auth_file: Path = AUTH_FILE
     use_paging: bool = False
     output_format: OutputFormat = OutputFormat.TABLE
     history: bool = True

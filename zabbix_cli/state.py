@@ -169,18 +169,13 @@ class State:
         Finally, the API version is set on the ZabbixAPIBaseModel class, so that
         we know how to render the results for the given version of the API.
         """
-        from zabbix_cli import auth
-        from zabbix_cli.models import TableRenderable
         from zabbix_cli.pyzabbix.client import ZabbixAPI
 
         self.config = config
 
         # Create the Zabbix API client object and log in
         self.client = ZabbixAPI.from_config(config)
-        auth.login(self.client, config)
-
-        TableRenderable.zabbix_version = self.client.version
-        TableRenderable.legacy_json_format = config.app.legacy_json_format
+        self.login()
 
     def revert_config_overrides(self) -> None:
         """Revert config overrides from CLI args applied in REPL.
@@ -204,6 +199,15 @@ class State:
             self._config_repl_original = self.config.model_copy(deep=True)
         else:
             self.config = self._config_repl_original.model_copy(deep=True)
+
+    def login(self) -> None:
+        """Log in to the Zabbix API."""
+        from zabbix_cli import auth
+        from zabbix_cli.models import TableRenderable
+
+        auth.login(self.client, self.config)
+        TableRenderable.zabbix_version = self.client.version
+        TableRenderable.legacy_json_format = self.config.app.legacy_json_format
 
     def logout(self):
         """Ends the current user's API session if the client is logged in
@@ -230,7 +234,7 @@ class State:
             # not documented in the API docs.
             self.client.user.logout()
             # Token is now expired - delete it
-            clear_auth_token_file()
+            clear_auth_token_file(self.config)
         except Exception as e:
             from zabbix_cli.output.console import exit_err
 
