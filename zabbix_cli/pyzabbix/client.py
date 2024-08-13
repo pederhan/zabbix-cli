@@ -38,6 +38,7 @@ from zabbix_cli.exceptions import ZabbixAPICallError
 from zabbix_cli.exceptions import ZabbixAPIException
 from zabbix_cli.exceptions import ZabbixAPIRequestError
 from zabbix_cli.exceptions import ZabbixAPIResponseParsingError
+from zabbix_cli.exceptions import ZabbixAPITokenExpired
 from zabbix_cli.exceptions import ZabbixNotFoundError
 from zabbix_cli.pyzabbix import compat
 from zabbix_cli.pyzabbix.enums import ActiveInterface
@@ -299,7 +300,27 @@ class ZabbixAPI:
                     f"Failed to log in to Zabbix API: {e}"
                 ) from e
         self.auth = str(auth) if auth else ""  # ensure str
+        self.ensure_connected()
         return self.auth
+
+    def ensure_connected(self) -> None:
+        """Tests the connectivity to the Zabbix API."""
+        try:
+            self.host.get(output=["hostid"], limit=1)
+        except Exception as e:
+            self.logout()
+            raise ZabbixAPICallError("Failed to connect to Zabbix API") from e
+
+    def logout(self) -> None:
+        if not self.auth:
+            return  # nothing to do
+        try:
+            self.user.logout()
+        except ZabbixAPITokenExpired:
+            pass
+        except ZabbixAPIRequestError as e:
+            raise ZabbixAPICallError("Failed to log out of Zabbix API: %s", e) from e
+        self.auth = ""
 
     def confimport(self, format: ExportFormat, source: str, rules: ImportRules) -> Any:
         """Alias for configuration.import because it clashes with
@@ -381,7 +402,15 @@ class ZabbixAPI:
             # some errors don't contain 'data': workaround for ZBX-9340
             if not resp.error.data:
                 resp.error.data = "No data"
-            raise ZabbixAPIRequestError(
+            if "API token expired" in resp.error.data:
+                cls = ZabbixAPITokenExpired
+                logger.debug(
+                    "API token '%s' has expired.",
+                    f"{self.auth[:8]}...",  # Redact most of the token
+                )
+            else:
+                cls = ZabbixAPIRequestError
+            raise cls(
                 f"Error: {resp.error.message}",
                 api_response=resp,
                 response=response,

@@ -24,7 +24,6 @@ import logging
 from pathlib import Path
 from typing import Any
 from typing import List
-from typing import Literal
 from typing import Optional
 
 from pydantic import AliasChoices
@@ -49,6 +48,7 @@ from zabbix_cli.dirs import DATA_DIR
 from zabbix_cli.dirs import EXPORT_DIR
 from zabbix_cli.dirs import LOGS_DIR
 from zabbix_cli.exceptions import ConfigError
+from zabbix_cli.logs import LogLevelStr
 from zabbix_cli.pyzabbix.enums import ExportFormat
 
 
@@ -79,7 +79,7 @@ class APIConfig(BaseModel):
         # Changed in V3: system_id -> username
         validation_alias=AliasChoices("username", "system_id"),
     )
-    password: Optional[SecretStr] = Field(default=None, exclude=True)
+    password: SecretStr = Field(default="", exclude=True)
     verify_ssl: bool = Field(
         default=True,
         # Changed in V3: cert_verify -> verify_ssl
@@ -224,9 +224,7 @@ class LoggingConfig(BaseModel):
         # Changed in V3: logging -> enabled (we also allow enable [why?])
         validation_alias=AliasChoices("logging", "enabled", "enable"),
     )
-    log_level: Literal[
-        "DEBUG", "INFO", "WARN", "WARNING", "ERROR", "CRITICAL", "FATAL"
-    ] = "ERROR"
+    log_level: LogLevelStr = "ERROR"
     log_file: Optional[Path] = (
         # TODO: define this default path elsewhere
         LOGS_DIR / "zabbix-cli.log"

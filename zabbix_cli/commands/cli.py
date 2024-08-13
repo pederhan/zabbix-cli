@@ -9,7 +9,6 @@ from typing import Optional
 
 import typer
 
-from zabbix_cli import auth
 from zabbix_cli.app import app
 from zabbix_cli.dirs import CONFIG_DIR
 from zabbix_cli.dirs import DATA_DIR
@@ -18,7 +17,6 @@ from zabbix_cli.dirs import LOGS_DIR
 from zabbix_cli.dirs import SITE_CONFIG_DIR
 from zabbix_cli.exceptions import ConfigExistsError
 from zabbix_cli.exceptions import ZabbixCLIError
-from zabbix_cli.logs import logger
 from zabbix_cli.output.console import info
 from zabbix_cli.output.console import print_path
 from zabbix_cli.output.console import print_toml
@@ -148,7 +146,7 @@ def login(
 ) -> None:
     """Reauthenticate with the Zabbix API.
 
-    Creates a new auth token.
+    Creates a new auth token file if enabled in the config.
     """
     from pydantic import SecretStr
 
@@ -171,17 +169,10 @@ def login(
         config.api.auth_token = None  # Clear token if it exists
     elif token:
         config.api.auth_token = SecretStr(token)
-        config.api.password = None
+        config.api.password = SecretStr("")
 
     # End current session if it's active
-    try:
-        app.state.client.user.logout()
-        if config.app.use_auth_token_file:
-            auth.clear_auth_token_file(config)
-    # Fails if no active session (ok)
-    except Exception as e:
-        logger.debug("Failed to log out: %s", e)
-
+    app.state.logout()
     app.state.login()
     success(f"Logged in to {config.api.url} as {config.api.username}.")
 
