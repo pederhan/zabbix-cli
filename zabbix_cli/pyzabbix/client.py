@@ -54,6 +54,10 @@ from zabbix_cli.pyzabbix.enums import TriggerPriority
 from zabbix_cli.pyzabbix.enums import UsergroupPermission
 from zabbix_cli.pyzabbix.enums import UserRole
 from zabbix_cli.pyzabbix.types import CreateHostInterfaceDetails
+from zabbix_cli.pyzabbix.types import Dashboard
+from zabbix_cli.pyzabbix.types import DashboardPage
+from zabbix_cli.pyzabbix.types import DashboardUser
+from zabbix_cli.pyzabbix.types import DashboardUserGroup
 from zabbix_cli.pyzabbix.types import Event
 from zabbix_cli.pyzabbix.types import GlobalMacro
 from zabbix_cli.pyzabbix.types import Host
@@ -2393,6 +2397,104 @@ class ZabbixAPI:
         except ZabbixAPIException as e:
             raise ZabbixAPICallError("Failed to fetch maps") from e
         return [MediaType(**m) for m in resp]
+
+    def get_dashboards(
+        self,
+        *names_or_ids: str,
+        select_pages: bool = True,
+        select_users: bool = True,
+        select_usergroups: bool = True,
+        search: bool = True,
+    ) -> List[Dashboard]:
+        """Get all dashboards, optionally filtered by names or ids."""
+        params: ParamsType = {"output": "extend"}
+        params = parse_name_or_id_arg(
+            params,
+            names_or_ids,
+            name_param="name",
+            id_param="dashboardids",
+            search=search,
+        )
+        if select_pages:
+            params["selectPages"] = "extend"
+        if select_users:
+            params["selectUsers"] = "extend"
+        if select_usergroups:
+            params["selectUserGroups"] = "extend"
+        try:
+            resp = self.dashboard.get(**params)
+        except ZabbixAPIException as e:
+            raise ZabbixAPICallError("Failed to fetch dashboards") from e
+        return [Dashboard(**d) for d in resp]
+
+    def create_dashboard(
+        self,
+        name: str,
+        userid: Optional[str] = None,
+        private: Optional[int] = None,
+        display_period: Optional[int] = None,
+        auto_start: Optional[int] = None,
+        pages: Optional[List[DashboardPage]] = None,
+        users: Optional[List[DashboardUser]] = None,
+        usergroups: Optional[List[DashboardUserGroup]] = None,
+    ) -> str:
+        params: ParamsType = {"name": name}
+        if userid:
+            params["userid"] = userid
+        if private is not None:
+            params["private"] = private
+        if display_period is not None:
+            params["display_period"] = display_period
+        if auto_start is not None:
+            params["auto_start"] = auto_start
+        if pages:
+            params["pages"] = [p.model_dump_api() for p in pages]
+        if users:
+            params["users"] = [u.model_dump_api() for u in users]
+        if usergroups:
+            params["userGroups"] = [ug.model_dump_api() for ug in usergroups]
+
+        try:
+            resp = self.dashboard.create(**params)
+        except ZabbixAPIException as e:
+            raise ZabbixAPICallError("Failed to create dashboard") from e
+        return str(resp)
+
+    def update_dashboard(
+        self,
+        dashboardid: str,
+        name: Optional[str] = None,
+        userid: Optional[str] = None,
+        private: Optional[int] = None,
+        display_period: Optional[int] = None,
+        auto_start: Optional[int] = None,
+        pages: Optional[List[DashboardPage]] = None,
+        users: Optional[List[DashboardUser]] = None,
+        usergroups: Optional[List[DashboardUserGroup]] = None,
+    ) -> str:
+        params: ParamsType = {"dashboardid": dashboardid}
+        if name:
+            params["name"] = name
+        if userid:
+            params["userid"] = userid
+        if private is not None:
+            params["private"] = private
+        if display_period is not None:
+            params["display_period"] = display_period
+        if auto_start is not None:
+            params["auto_start"] = auto_start
+        if pages:
+            params["pages"] = [p.model_dump_api() for p in pages]
+        if users:
+            params["users"] = [u.model_dump_api() for u in users]
+        if usergroups:
+            params["userGroups"] = [ug.model_dump_api() for ug in usergroups]
+
+        try:
+            resp = self.dashboard.update(**params)
+        except ZabbixAPIException as e:
+            raise ZabbixAPICallError(f"Failed to update dashboard {dashboardid}") from e
+        return str(resp)
 
     def export_configuration(
         self,

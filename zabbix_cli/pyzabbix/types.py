@@ -1259,6 +1259,61 @@ class ImportRules(ZabbixAPIBaseModel):
         return rules
 
 
+class Dashboard(ZabbixAPIBaseModel):
+    dashboardid: str
+    name: str
+    userid: str  # owner of the dashboard
+    private: int = 1  # 0 = public, 1 = private
+
+    # Possible values: 10, 30, 60, 120, 600, 1800, 3600.
+    # NOTE: Make display_period a literal type?
+    display_period: int = 30
+
+    auto_start: int = 1  # 0 = no, 1 = yes (auto start slideshow)
+    pages: List[DashboardPage] = []
+    users: List[DashboardUser] = []
+    usergroups: List[DashboardUserGroup] = Field(
+        default_factory=list,
+        serialization_alias="userGroups",
+        validation_alias=AliasChoices("userGroups", "usergroups"),
+    )
+
+
+class DashboardWidgetField(ZabbixAPIBaseModel):
+    type: int
+    name: str
+    value: Any  # TODO: narrow this down. Json perhaps?
+
+
+class DashboardWidget(ZabbixAPIBaseModel):
+    widgetid: Optional[str] = Field(default=None, exclude=True)
+    type: str  # NOTE: Make this an enum?
+    name: str
+    x: int
+    y: int
+    width: int
+    height: int
+    view_mode: int  # 0 (default), 1 (hidden header)
+    fields: List[DashboardWidgetField] = []
+
+
+class DashboardPage(ZabbixAPIBaseModel):
+    dashboard_pageid: Optional[str] = Field(default=None, exclude=True)
+    name: str
+    display_period: int  # same as Dashboard.display_period
+    widgets: List[DashboardWidget] = []
+
+
+class DashboardUserGroup(ZabbixAPIBaseModel):
+    usrgrpid: str
+    permission: int
+
+
+class DashboardUser(ZabbixAPIBaseModel):
+    userid: str
+    permission: int  # uses same values as UsergroupPermission
+
+
 def resolve_forward_refs() -> None:
     """Certain models have forward references that need to be resolved.
 
@@ -1270,6 +1325,10 @@ def resolve_forward_refs() -> None:
     rebuild all the models in the module. This is inefficient, but
     guarantees we won't have any runtime errors due to unresolved
     forward references.
+
+    Manual rebuilding + testing would be more efficient, but
+    due to a lack of hypothesis support for Pydantic v2, we can't really
+    trust that we've covered all cases this way.
     """
     for obj in globals().values():
         if not isinstance(obj, type):

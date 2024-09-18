@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import logging
 from enum import Enum
+from pathlib import Path
 from typing import Any
 from typing import Generic
 from typing import List
@@ -15,6 +17,8 @@ from typing_extensions import Self
 from zabbix_cli.exceptions import ZabbixCLIError
 
 T = TypeVar("T")
+
+logger = logging.getLogger(__name__)
 
 
 class APIStr(str, Generic[T]):
@@ -267,6 +271,16 @@ class ExportFormat(StrEnum):
     def get_importables(cls) -> List[ExportFormat]:
         """Return list of formats that can be imported."""
         return [cls.JSON, cls.YAML, cls.XML]
+
+    @classmethod
+    def from_path(cls, path: Path) -> ExportFormat:
+        """Return the format based on the file extension."""
+        try:
+            ext = path.suffix.strip(".")
+            return cls(ext)
+        except ValueError:
+            logger.error(f"Failed to determine format from path: {path}")
+            raise
 
 
 class GUIAccess(APIStrEnum):

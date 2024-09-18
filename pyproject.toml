@@ -45,6 +45,7 @@ dependencies = [
   "platformdirs>=2.5.4",
   "strenum>=0.4.15",
   "typing-extensions>=4.8.0",
+  "pyyaml>=6.0.0",
 ]
 dynamic = ["version"]
 

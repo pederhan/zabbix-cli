@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import time
+from abc import ABC
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Callable
 from typing import Dict
 from typing import Iterator
 from typing import List
@@ -29,6 +31,7 @@ from zabbix_cli.output.console import info
 from zabbix_cli.output.console import success
 from zabbix_cli.output.console import warning
 from zabbix_cli.output.formatting.path import path_link
+from zabbix_cli.output.prompts import str_prompt
 from zabbix_cli.output.render import render_result
 from zabbix_cli.pyzabbix.enums import ExportFormat
 from zabbix_cli.utils.args import parse_bool_arg
@@ -39,6 +42,7 @@ from zabbix_cli.utils.fs import sanitize_filename
 from zabbix_cli.utils.utils import convert_seconds_to_duration
 
 if TYPE_CHECKING:
+    from rich.progress import Progress
     from typing_extensions import TypedDict
     from typing_extensions import Unpack
 
@@ -65,6 +69,70 @@ if TYPE_CHECKING:
 HELP_PANEL = "Import/Export"
 
 
+class APISerializer(ABC):
+    """ABC for (de)serializing Zabbix configuration objects not supported
+    by the `configuration.{export,import}` API methods."""
+
+    def load(self, file: Path) -> None:
+        raise NotImplementedError
+
+    def dumps(self, obj: Any) -> str:
+        raise NotImplementedError
+
+
+class JSONSerializer(APISerializer):
+    def load(self, file: Path) -> None:
+        import json
+
+        return json.loads(file.read_text())
+
+    def dumps(self, obj: Any) -> str:
+        import json
+
+        return json.dumps(obj, indent=2)
+
+
+class YAMLSerializer(APISerializer):
+    def load(self, file: Path) -> None:
+        import yaml
+
+        with file.open() as f:
+            return yaml.safe_load(f)
+
+    def dumps(self, obj: Any) -> str:
+        import yaml
+
+        try:
+            from yaml import CDumper as Dumper
+        except ImportError:
+            from yaml import Dumper
+
+        return yaml.dump(obj, Dumper=Dumper)
+
+
+SERIALIZERS: Dict[ExportFormat, APISerializer] = {
+    ExportFormat.JSON: JSONSerializer(),
+    ExportFormat.YAML: YAMLSerializer(),
+}
+
+
+def get_serializer_from_path(path: Path) -> APISerializer:
+    """Get serializer for a path or format."""
+    fmt = ExportFormat.from_path(path)
+    try:
+        return SERIALIZERS[fmt]
+    except KeyError:
+        raise ValueError(f"Unsupported export format: {fmt}")
+
+
+def get_serializer_from_format(fmt: ExportFormat) -> APISerializer:
+    """Get serializer for a format."""
+    try:
+        return SERIALIZERS[fmt]
+    except KeyError:
+        raise ValueError(f"Custom serializer for format '{fmt}' not found.")
+
+
 class ExportType(StrEnum):
     HOST_GROUPS = "host_groups"  # >=6.2
     TEMPLATE_GROUPS = "template_groups"  # >=6.2
@@ -73,6 +141,7 @@ class ExportType(StrEnum):
     MAPS = "maps"
     TEMPLATES = "templates"
     MEDIA_TYPES = "mediaTypes"  # >= 6.0 (but should work on 5.0 too)
+    DASHBOARDS = "dashboards"
 
     @classmethod
     def _missing_(cls, value: Any) -> ExportType:
@@ -84,6 +153,42 @@ class ExportType(StrEnum):
         if self.value == "mediaTypes":
             return "media types"
         return self.value.replace("_", " ").lower()
+
+    def requires_serializer(self) -> bool:
+        return self in NON_API_TYPES
+
+    @staticmethod
+    def path_requires_serializer(path: Path) -> bool:
+        for typ in NON_API_TYPES:
+            if typ.value in path.parts:
+                return True
+        return False
+
+    @classmethod
+    def from_path(cls, path: Path) -> ExportType:
+        """Get ExportType from a path."""
+        members = set(cls.__members__.values())
+        # Iterate from the end of the path
+        # so we match the deepest occurence first
+        # i.e. /path/to/exports/dasboards/1.json
+        #                       ^^^^^^^^^
+        for part in path.parts[::-1]:
+            if part in members:
+                return cls(part)
+        raise ValueError(f"Invalid export type: {path}")
+
+    @classmethod
+    def from_path_safe(cls, path: Path) -> Optional[ExportType]:
+        """Safely get an ExportType from a path.
+
+        Returns None if ExportType cannot be determined from path."""
+        try:
+            return cls.from_path(path)
+        except ValueError:
+            return None
+
+
+NON_API_TYPES = [ExportType.DASHBOARDS]
 
 
 class ExporterFunc(Protocol):
@@ -133,6 +238,7 @@ class ZabbixExporter:
             ExportType.MAPS: self.export_maps,
             ExportType.TEMPLATES: self.export_templates,
             ExportType.MEDIA_TYPES: self.export_media_types,
+            ExportType.DASHBOARDS: self.export_dashboards,
         }
 
         self.check_export_types()
@@ -175,7 +281,7 @@ class ZabbixExporter:
         return exporters
 
     def get_filename(self, name: str, id: str, export_type: ExportType) -> Path:
-        """Get path to export file given a ."""
+        """Get path to export file given a name, id and export type."""
         stem = self.get_filename_stem(name, id)
         directory = self.directory / export_type.value
         return directory / f"{stem}.{self.format.value}"
@@ -252,6 +358,29 @@ class ZabbixExporter:
                 template.host, template.templateid, ExportType.TEMPLATES
             )
             yield self.do_run_export(filename, templates=[template])
+
+    def export_dashboards(self) -> Iterator[Optional[Path]]:
+        # HACK: dashboard exporting is not supported by configuration.export
+        # so we have to use the dashboard.get method instead and manually process it
+        dashboards = self.client.get_dashboards(*self.names)
+        for dashboard in dashboards:
+            filename = self.get_filename(
+                dashboard.name, dashboard.dashboardid, ExportType.DASHBOARDS
+            )
+            serializer = self.get_serializer_or_warn(ExportType.DASHBOARDS)
+            if not serializer:
+                yield None
+                break
+            exportable = dashboard.model_dump_api()
+            exported_str = serializer.dumps(exportable)
+            yield self.write_exported(exported_str, filename)
+
+    def get_serializer_or_warn(self, typ: ExportType) -> Optional[APISerializer]:
+        try:
+            return get_serializer_from_format(self.format)
+        except ValueError:
+            warning(f"Exporting {typ} to {self.format} is not supported. Skipping.")
+        return None
 
     def do_run_export(
         self, filename: Path, **kwargs: Unpack[ExportKwargs]
@@ -478,6 +607,28 @@ def export_configuration(
         open_directory(exportdir)
 
 
+class PauseProgress:
+    """Context manager that pauses a rich Progress"""
+
+    # Source: https://github.com/Textualize/rich/issues/1535#issuecomment-1711731104
+    def __init__(self, progress: Progress) -> None:
+        self._progress = progress
+
+    def _clear_line(self) -> None:
+        UP = "\x1b[1A"
+        CLEAR = "\x1b[2K"
+        for _ in self._progress.tasks:
+            print(UP + CLEAR + UP)
+
+    def __enter__(self):
+        self._progress.stop()
+        self._clear_line()
+        return self._progress
+
+    def __exit__(self, exc_type: Any, exc_value: Any, exc_traceback: Any) -> None:
+        self._progress.start()
+
+
 class ZabbixImporter:
     def __init__(
         self,
@@ -488,6 +639,7 @@ class ZabbixImporter:
         update_existing: bool,
         delete_missing: bool,
         ignore_errors: bool,
+        prompt: bool = False,
     ) -> None:
         self.client = client
         self.config = config
@@ -496,9 +648,12 @@ class ZabbixImporter:
         self.create_missing = create_missing
         self.update_existing = update_existing
         self.delete_missing = delete_missing
+        self.prompt = prompt
 
         self.imported: List[Path] = []
         self.failed: List[Path] = []
+
+        self.progress: Optional[Progress] = None
 
     def run(self) -> None:
         """Runs the importer."""
@@ -509,7 +664,7 @@ class ZabbixImporter:
         from rich.progress import TextColumn
         from rich.progress import TimeElapsedColumn
 
-        progress = Progress(
+        self.progress = Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
             BarColumn(),
@@ -518,17 +673,25 @@ class ZabbixImporter:
             transient=True,
             console=err_console,
         )
-        with progress:
-            task = progress.add_task("Importing files...", total=len(self.files))
+        with self.progress:
+            task = self.progress.add_task("Importing files...", total=len(self.files))
             for file in self.files:
                 self.import_file(file)
-                progress.update(task, advance=1)
+                self.progress.update(task, advance=1)
 
     def import_file(self, file: Path) -> None:
-        # API method will return true if successful, but does failure return false
-        # or does it raise an exception?
+        """Import a Zabbix object from a file."""
+        # Custom importers for types unsupported by configuration.import
+        importers: Dict[ExportType, Callable[[Path], None]] = {
+            ExportType.DASHBOARDS: self.import_dashboard
+        }
+
         try:
-            self.client.import_configuration(file)
+            export_type = ExportType.from_path_safe(file)
+            if export_type and (importer := importers.get(export_type)):
+                importer(file)
+            else:
+                self.client.import_configuration(file)
         except Exception as e:
             self.failed.append(file)
             msg = f"Failed to import {file}: {e}"
@@ -539,6 +702,46 @@ class ZabbixImporter:
         else:
             self.imported.append(file)
             logger.info(f"Imported file {file}")
+
+    def import_dashboard(self, file: Path) -> None:
+        from zabbix_cli.pyzabbix.types import Dashboard
+
+        serializer = get_serializer_from_path(file)
+        data = serializer.load(file)
+        dash = Dashboard.model_validate(data)
+        dashboards = self.client.get_dashboards(dash.name)
+
+        # We should always have a progress, just none-check it here
+        if self.prompt and self.progress:
+            with PauseProgress(self.progress):
+                dash.name = str_prompt("Dashboard name", default=dash.name)
+
+        # Dashboard does not exist, create it
+        if not dashboards:
+            self.client.create_dashboard(
+                name=dash.name,
+                private=dash.private,
+                display_period=dash.display_period,
+                auto_start=dash.auto_start,
+                pages=dash.pages,
+                users=dash.users,
+                usergroups=dash.usergroups,
+            )
+        # Update existing dashboard
+        elif dashboards and self.update_existing:
+            existing = dashboards[0]
+            self.client.update_dashboard(
+                dashboardid=existing.dashboardid,
+                name=dash.name,
+                private=dash.private,
+                display_period=dash.display_period,
+                auto_start=dash.auto_start,
+                pages=dash.pages,
+                users=dash.users,
+                usergroups=dash.usergroups,
+            )
+        else:
+            logger.info(f"Skipping existing dashboard: {dash.name}")
 
 
 def filter_valid_imports(files: List[Path]) -> List[Path]:
@@ -580,6 +783,12 @@ def import_configuration(
         "--ignore-errors",
         is_flag=True,
         help="Enable best-effort importing. Print errors from failed imports but continue importing.",
+    ),
+    prompt: bool = typer.Option(
+        False,
+        "--prompt",
+        help="Prompt for new names for imported dashboards.",
+        is_flag=True,
     ),
     # Legacy positional args
     args: Optional[List[str]] = ARGS_POSITIONAL,
@@ -652,6 +861,7 @@ def import_configuration(
         update_existing=update_existing,
         ignore_errors=ignore_errors,
         delete_missing=delete_missing,
+        prompt=prompt,
     )
 
     try:
