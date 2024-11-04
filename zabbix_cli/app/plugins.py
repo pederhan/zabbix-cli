@@ -9,7 +9,8 @@ from typing import Dict
 from typing import Protocol
 from typing import Tuple
 from typing import cast
-from typing import runtime_checkable
+
+from typing_extensions import runtime_checkable  # performance improvement
 
 if sys.version_info < (3, 10):
     from importlib_metadata import EntryPoint
@@ -85,27 +86,19 @@ class PluginLoader:
 
         discovered_plugins = entry_points(group="zabbix-cli.plugins")
 
-        # HACK: Cast Tuple[Any, ...] result to concrete type.
-        # In order to pass type checking on all Python versions,
-        # we need to pretend that we are developing on 3.8 and
-        # using the backport. The problem is that the backport
-        # does not define a generic tuple type for the result,
-        # and instead just subclasses tuple. So we need to cast
-        # the result to the correct type.
-        # This is one of the drawbacks of running in 3.8 mode, but
-        # it's necessary to ensure we don't introduce features that
-        # do not exist in our minimum supported version.
+        # HACK: Cast Tuple[Any, ...] result to concrete type for Python < 3.10
         discovered_plugins = cast(Tuple[EntryPoint], discovered_plugins)
         for plugin in discovered_plugins:
             conf = config.plugins.get(plugin.name)
             try:
                 module = load_plugin_from_entry_point(plugin)
             except Exception as e:
+                # NOTE: Entrypoint plugins failing to load are not fatal.
                 # By default, broken plugings will not break the application
                 # unless they are explicitly marked as required in the config.
                 # This is a deviation from the standard behavior of plugins, but
                 # since these are third party plugins, we want to be more lenient
-                # and not break the entire application if a plugin is broken.
+                # and not break the entire application if an installed plugin is broken.
                 if not conf or not conf.optional:
                     raise PluginLoadError(plugin.name, conf) from e
                 else:
