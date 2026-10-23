@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Self
 
 from pydantic import BaseModel
 from pydantic import Field
 from pydantic import model_serializer
-from typing_extensions import Self
 
 from zabbix_cli.models import ColsRowsType
 from zabbix_cli.models import MetaKey

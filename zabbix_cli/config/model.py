@@ -24,6 +24,7 @@ import functools
 import logging
 from pathlib import Path
 from typing import Any
+from typing import Self
 from typing import TypeVar
 from typing import overload
 
@@ -39,7 +40,6 @@ from pydantic import ValidationError
 from pydantic import field_serializer
 from pydantic import field_validator
 from pydantic import model_validator
-from typing_extensions import Self
 
 from zabbix_cli._v2_compat import CONFIG_PRIORITY as CONFIG_PRIORITY_LEGACY
 from zabbix_cli.bulk import BulkRunnerMode

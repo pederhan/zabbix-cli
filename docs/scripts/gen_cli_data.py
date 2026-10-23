@@ -10,14 +10,11 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 from typing import NamedTuple
 from typing import Protocol
 
-try:
-    import tomllib
-except ImportError:
-    import tomli as tomllib
 import tomli_w
 
 sys.path.append(Path(__file__).parent.as_posix())

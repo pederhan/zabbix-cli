@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import copy
-import sys
 from collections.abc import Callable
 from typing import Any
 
@@ -133,7 +132,6 @@ def test_patch_generate_enum_convertor_strenum_lib() -> None:
     assert converter(TestEnum.BAR) == TestEnum.BAR
 
 
-@pytest.mark.skipif(sys.version_info < (3, 11), reason="Requires Python 3.11+")
 def test_patch_generate_enum_convertor_strenum_stdlib() -> None:
     from enum import StrEnum
 

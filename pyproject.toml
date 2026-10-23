@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 description = "ZABBIX-CLI - Zabbix terminal client"
 name = "zabbix-cli-uio"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = "GPL-3.0-or-later"
 keywords = []
 maintainers = [{ name = "Peder Hovdan Andresen", email = "pederhan@uio.no" }]
@@ -26,7 +26,6 @@ classifiers = [
   "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
   "Development Status :: 4 - Beta",
   "Programming Language :: Python",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
@@ -38,15 +37,14 @@ dependencies = [
   "click>=8.2.0",                          # click.core.MultiCommand removed in 8.2.0
   "rich>=13.3.1",
   "prompt_toolkit>=3.0.47",
-  "httpx[socks]>=0.28.1",
   "packaging>=22.0",
   "pydantic>=2.7.0",
-  "tomli>=2.0.1; python_version < '3.11'",
   "tomli-w>=1.0.0",
   "platformdirs>=2.5.4",
   "strenum>=0.4.15",
   "typing-extensions>=4.8.0",
   "shellingham>=1.5.4",
+  "httpx2[socks]>=2.16.0",
 ]
 dynamic = ["version"]
 
@@ -143,7 +141,7 @@ omit = ["zabbix_cli/__about__.py"]
 exclude_lines = ["no cov", "if __name__ == .__main__.:", "if TYPE_CHECKING:"]
 
 [tool.basedpyright]
-pythonVersion = "3.10"
+pythonVersion = "3.11"
 # venvPath = "."
 # venv = ".venv"
 ignore = ["zabbix_cli/commands/_dev.py"]

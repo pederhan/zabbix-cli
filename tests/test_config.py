@@ -1,23 +1,17 @@
 from __future__ import annotations
 
-import sys
+import tomllib
 from pathlib import Path
 from typing import Any
 from typing import Optional  # pyright: ignore[reportDeprecated]
+from typing import Self
 from typing import Union  # pyright: ignore[reportDeprecated]
 
 import pytest
-
-if sys.version_info >= (3, 11):
-    import tomllib  # pyright: ignore[reportUnreachable]
-else:
-    import tomli as tomllib
-
 from inline_snapshot import snapshot
 from pydantic import BaseModel
 from pydantic import Field
 from pydantic import model_validator
-from typing_extensions import Self
 from zabbix_cli.config.commands import CommandConfig
 from zabbix_cli.config.commands import CreateHostOrTemplateGroup
 from zabbix_cli.config.constants import OutputFormat

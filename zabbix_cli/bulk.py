@@ -13,11 +13,11 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
+from typing import Self
 
 import typer
 from pydantic import BaseModel
 from pydantic import Field
-from typing_extensions import Self
 
 from zabbix_cli.config.constants import BulkRunnerMode
 from zabbix_cli.exceptions import CommandFileError

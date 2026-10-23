@@ -8,9 +8,9 @@ from typing import Protocol
 from typing import runtime_checkable
 
 if TYPE_CHECKING:
-    from httpx import ConnectError
-    from httpx import RequestError
-    from httpx import Response as HTTPResponse
+    from httpx2 import ConnectError
+    from httpx2 import RequestError
+    from httpx2 import Response as HTTPResponse
     from pydantic import BaseModel
     from pydantic import ValidationError
 
@@ -249,7 +249,7 @@ def _fmt_request_error(e: RequestError, exc_type: str, reason: str) -> str:
 
 
 def handle_connect_error(e: ConnectError) -> NoReturn:
-    """Handles an httpx ConnectError."""
+    """Handles an httpx2 ConnectError."""
     # Simple heuristic here to determine cause
     if e.args and "connection refused" in str(e.args[0]).casefold():
         reason = "Connection refused"
@@ -289,10 +289,10 @@ def handle_zabbix_api_exception(e: ZabbixAPIException) -> NoReturn:
 
 def get_exception_handler(type_: type[Exception]) -> HandleFunc | None:
     """Returns the exception handler for the given exception type."""
-    from httpx import ConnectError
+    from httpx2 import ConnectError
     from pydantic import ValidationError
 
-    # Defined inline for performance reasons (httpx and pydantic imports)
+    # Defined inline for performance reasons (httpx2 and pydantic imports)
     EXC_HANDLERS: dict[type[Exception], HandleFunc] = {
         # ZabbixAPICallError: handle_zabbix_api_call_error,  # NOTE: use different strategy for this?
         ZabbixAPIException: handle_zabbix_api_exception,  # NOTE: use different strategy for this?

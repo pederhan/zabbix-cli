@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Any
+from typing import Self
 
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import ConfigDict
@@ -10,7 +11,6 @@ from pydantic import PrivateAttr
 from pydantic import ValidationInfo
 from pydantic import field_validator
 from pydantic import model_validator
-from typing_extensions import Self
 
 from zabbix_cli.config.utils import check_deprecated_fields
 

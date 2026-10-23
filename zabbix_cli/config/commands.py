@@ -5,11 +5,11 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 from typing import Any
+from typing import Self
 
 from pydantic import AliasChoices
 from pydantic import Field
 from pydantic import model_validator
-from typing_extensions import Self
 
 from zabbix_cli.config.base import BaseModel
 from zabbix_cli.dirs import EXPORT_DIR

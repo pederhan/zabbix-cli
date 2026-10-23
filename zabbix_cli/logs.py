@@ -181,5 +181,5 @@ def configure_logging(config: LoggingConfig | None = None):
     logger.setLevel(level)  # configure global app logger
 
     # Also log from HTTPX
-    httpx = logging.getLogger("httpx")
-    httpx.setLevel(level)
+    httpx2 = logging.getLogger("httpx2")
+    httpx2.setLevel(level)

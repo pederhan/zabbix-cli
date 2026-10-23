@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Self
 
 from packaging.version import Version
 from pydantic import ConfigDict
@@ -11,7 +12,6 @@ from pydantic import FieldSerializationInfo
 from pydantic import field_serializer
 from rich.box import SIMPLE_HEAD
 from rich.table import Table
-from typing_extensions import Self
 from typing_extensions import TypedDict
 
 from zabbix_cli.models import TableRenderable

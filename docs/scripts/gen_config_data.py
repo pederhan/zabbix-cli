@@ -8,6 +8,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 from typing import Literal
+from typing import Self
 from typing import Union
 from typing import get_args
 from typing import get_origin
@@ -26,7 +27,6 @@ from pydantic import computed_field
 from pydantic import field_validator
 from pydantic.fields import FieldInfo
 from pydantic_core import PydanticUndefined
-from typing_extensions import Self
 from zabbix_cli.config.model import Config
 
 sys.path.append(Path(__file__).parent.as_posix())

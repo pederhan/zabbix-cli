@@ -25,7 +25,7 @@ from typing import Any
 from typing import Literal
 from typing import cast
 
-import httpx
+import httpx2
 from packaging.version import InvalidVersion
 from packaging.version import Version
 from pydantic import ValidationError
@@ -85,7 +85,7 @@ from zabbix_cli.pyzabbix.types import ZabbixRight
 from zabbix_cli.utils.utils import get_acknowledge_action_value
 
 if TYPE_CHECKING:
-    from httpx._types import TimeoutTypes
+    from httpx2._types import TimeoutTypes
     from typing_extensions import TypedDict
 
     from zabbix_cli.config.model import Config
@@ -292,11 +292,11 @@ class ZabbixAPI:
 
     def _get_client(
         self, *, verify_ssl: bool | Path, timeout: float | int | None = None
-    ) -> httpx.Client:
+    ) -> httpx2.Client:
         kwargs: HTTPXClientKwargs = {}
         if timeout is not None:
             kwargs["timeout"] = timeout
-        client = httpx.Client(
+        client = httpx2.Client(
             verify=self._get_ssl_context(verify_ssl),
             # Default headers for all requests
             headers={
@@ -512,7 +512,7 @@ class ZabbixAPI:
     def _check_response_errors(
         self,
         resp: ZabbixAPIResponse,
-        response: httpx.Response,
+        response: httpx2.Response,
         params: ParamsType | Json,
     ) -> None:
         # Nothing to handlde

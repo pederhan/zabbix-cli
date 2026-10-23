@@ -29,8 +29,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 from typing import Any
-
-from typing_extensions import Self
+from typing import Self
 
 # This module should not import from other local modules because it's widely
 # used throughout the application, and we don't want to create circular imports.

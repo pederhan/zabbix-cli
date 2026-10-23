@@ -4,10 +4,10 @@ from collections.abc import Mapping
 from enum import Enum
 from typing import Any
 from typing import Generic
+from typing import Self
 from typing import TypeVar
 
 from strenum import StrEnum
-from typing_extensions import Self
 
 from zabbix_cli.exceptions import ZabbixCLIError
 

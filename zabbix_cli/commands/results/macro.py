@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Self
 
 from pydantic import Field
 from pydantic import model_serializer
-from typing_extensions import Self
 
 from zabbix_cli.models import TableRenderable
 from zabbix_cli.pyzabbix.enums import MacroAutomatic

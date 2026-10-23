@@ -22,13 +22,13 @@ from abc import abstractmethod
 from pathlib import Path
 from typing import Any
 from typing import NamedTuple
+from typing import Self
 
-import httpx
+import httpx2
 from pydantic import BaseModel
 from pydantic import ValidationError
 from rich.progress import Progress
 from strenum import StrEnum
-from typing_extensions import Self
 
 from zabbix_cli.__about__ import __version__
 from zabbix_cli.exceptions import ZabbixCLIError
@@ -274,7 +274,7 @@ class UvUpdater(PypiUpdater):
 def download_file(url: str, destination: Path) -> None:
     """Download a file from a URL to a destination path."""
     logger.debug("Downloading %s to %s", url, destination)
-    with httpx.stream("GET", url, follow_redirects=True) as response:
+    with httpx2.stream("GET", url, follow_redirects=True) as response:
         with Progress() as progress:
             if response.status_code != 200:
                 raise UpdateError(
@@ -375,7 +375,7 @@ class PyInstallerUpdater(Updater):
 
     def get_release_version(self) -> str:
         """Get the latest release info."""
-        resp = httpx.get(self.URL_API_LATEST)
+        resp = httpx2.get(self.URL_API_LATEST)
         if resp.status_code != 200:
             raise UpdateError(f"Failed to get latest release: {resp.text}")
         try:

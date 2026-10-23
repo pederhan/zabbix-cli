@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -22,10 +21,7 @@ logger = logging.getLogger(__name__)
 
 def load_config_toml(filename: Path) -> dict[str, Any]:
     """Load a TOML configuration file."""
-    if sys.version_info >= (3, 11):
-        import tomllib
-    else:
-        import tomli as tomllib
+    import tomllib
 
     try:
         return tomllib.loads(filename.read_text())
