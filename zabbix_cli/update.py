@@ -19,6 +19,7 @@ import subprocess
 import sys
 from abc import ABC
 from abc import abstractmethod
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 from typing import NamedTuple
@@ -28,7 +29,6 @@ import httpx2
 from pydantic import BaseModel
 from pydantic import ValidationError
 from rich.progress import Progress
-from strenum import StrEnum
 
 from zabbix_cli.__about__ import __version__
 from zabbix_cli.exceptions import ZabbixCLIError

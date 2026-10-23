@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import MutableSequence
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -16,7 +16,6 @@ from pydantic import Field
 from pydantic import JsonValue
 from pydantic.fields import ComputedFieldInfo
 from pydantic.fields import FieldInfo
-from strenum import StrEnum
 from typing_extensions import TypeVar
 
 from zabbix_cli.logs import logger
@@ -46,7 +45,7 @@ ColsRowsType = tuple[ColsType, RowsType]
 """A tuple containing a list of columns and a list of rows, where each row is a list of strings."""
 
 
-class MetaKey(str, Enum):
+class MetaKey(StrEnum):
     """Keys used in the `json_schema_extra` dict of a field to customize
     its rendering.
     """

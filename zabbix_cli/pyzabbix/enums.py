@@ -2,12 +2,11 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from enum import Enum
+from enum import StrEnum
 from typing import Any
 from typing import Generic
 from typing import Self
 from typing import TypeVar
-
-from strenum import StrEnum
 
 from zabbix_cli.exceptions import ZabbixCLIError
 

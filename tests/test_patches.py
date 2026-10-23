@@ -113,26 +113,8 @@ def test_patch_generate_enum_convertor_apistrenum() -> None:
         assert converter("2")
 
 
-def test_patch_generate_enum_convertor_strenum_lib() -> None:
-    """Test patched converter with StrEnum from strenum library."""
-    from strenum import StrEnum
-
-    generate_converter = _do_patch_generate_enum_convertor()
-
-    class TestEnum(StrEnum):
-        FOO = "foo"
-        BAR = "bar"
-
-    converter = generate_converter(TestEnum)
-    assert converter("foo") == TestEnum.FOO
-    assert converter("bar") == TestEnum.BAR
-    assert converter("FOO") == TestEnum.FOO
-    assert converter("BAR") == TestEnum.BAR
-    assert converter(TestEnum.FOO) == TestEnum.FOO
-    assert converter(TestEnum.BAR) == TestEnum.BAR
-
-
 def test_patch_generate_enum_convertor_strenum_stdlib() -> None:
+    """Test patched converter with StrEnum from stdlib."""
     from enum import StrEnum
 
     generate_converter = _do_patch_generate_enum_convertor()

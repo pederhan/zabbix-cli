@@ -15,6 +15,7 @@ import logging
 import os
 import sys
 from collections.abc import Generator
+from enum import StrEnum
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -25,7 +26,6 @@ from pydantic import BaseModel
 from pydantic import PrivateAttr
 from pydantic import RootModel
 from rich.console import ScreenContext
-from strenum import StrEnum
 
 from zabbix_cli._v2_compat import AUTH_FILE as AUTH_FILE_LEGACY
 from zabbix_cli._v2_compat import AUTH_TOKEN_FILE as AUTH_TOKEN_FILE_LEGACY

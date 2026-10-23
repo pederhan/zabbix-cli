@@ -1,10 +1,10 @@
 # Rich markup styles for the CLI
 from __future__ import annotations
 
+from enum import StrEnum
 from typing import Any
 
 from rich.theme import Theme
-from strenum import StrEnum
 from typer.rich_utils import STYLE_OPTION
 
 # NOTE: we define these enums to allow us to parse the markup text and

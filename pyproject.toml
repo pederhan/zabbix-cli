@@ -41,7 +41,6 @@ dependencies = [
   "pydantic>=2.7.0",
   "tomli-w>=1.0.0",
   "platformdirs>=2.5.4",
-  "strenum>=0.4.15",
   "typing-extensions>=4.8.0",
   "shellingham>=1.5.4",
   "httpx2[socks]>=2.16.0",

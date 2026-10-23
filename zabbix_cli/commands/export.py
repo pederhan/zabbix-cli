@@ -3,6 +3,7 @@ from __future__ import annotations
 import time
 from collections.abc import Iterator
 from datetime import datetime
+from enum import StrEnum
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -10,7 +11,6 @@ from typing import NamedTuple
 from typing import Protocol
 
 import typer
-from strenum import StrEnum
 
 from zabbix_cli._v2_compat import deprecated_positional_arguments
 from zabbix_cli.app import Example

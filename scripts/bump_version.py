@@ -8,6 +8,7 @@ from collections.abc import Iterator
 from collections.abc import Sequence
 from datetime import datetime
 from enum import IntEnum
+from enum import StrEnum
 from enum import auto
 from functools import wraps
 from pathlib import Path
@@ -20,7 +21,6 @@ from typing import Protocol
 import typer
 from rich.console import Console
 from rich.panel import Panel
-from strenum import StrEnum
 
 logger = logging.getLogger(__name__)
 

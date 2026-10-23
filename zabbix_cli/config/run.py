@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 
 import typer
@@ -9,7 +9,7 @@ from zabbix_cli.config.model import Config
 from zabbix_cli.config.utils import get_config
 
 
-class RunMode(str, Enum):
+class RunMode(StrEnum):
     SHOW = "show"
     DEFAULTS = "defaults"
 

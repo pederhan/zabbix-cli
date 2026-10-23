@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+from enum import StrEnum
 from typing import TYPE_CHECKING
 from typing import TypeVar
 
 import typer
-from strenum import StrEnum
 
 from zabbix_cli._v2_compat import deprecated_positional_arguments
 from zabbix_cli.app import Example

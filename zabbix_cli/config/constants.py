@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
-
-from strenum import StrEnum
 
 from zabbix_cli.dirs import CONFIG_DIR
 from zabbix_cli.dirs import DATA_DIR
